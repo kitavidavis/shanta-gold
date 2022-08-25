@@ -219,6 +219,30 @@ export default function App() {
       data: outlineArr
     }
 
+  const languages = new Set();
+
+  for(let i=0; i<EthnicClans.features.length; i++){
+      languages.add(EthnicClans.features[i].properties.LANGUAGE);
+  }
+
+  const languageColorObject: {color: string, language: any}[] = [];
+
+  languages.forEach(function(value: any){
+    let randomColor = '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6);
+    let chunk = {color: randomColor, language: value};
+    languageColorObject.push(chunk);
+    console.log(value);
+  })
+
+  const featureColor = (name: string) => {
+    let idx = languageColorObject.findIndex((obj => obj.language === name));
+    if(idx !== -1){
+      let obj = languageColorObject[idx];
+
+      return obj.color
+    }
+  }
+
   const MapPanel = () => {
     return (
       <MapContainer style={{height: '100%', width: '100%'}} center={[0.142, 34.66]} zoom={activeOutline === "" ? 10 : 16}  scrollWheelZoom={true}>
@@ -241,40 +265,44 @@ export default function App() {
     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
   />
   </LayersControl.BaseLayer>
-  <LayersControl.Overlay checked name='Ethnic Clans'>
+  <LayersControl.Overlay name='Ethnic Clans'>
         <GeoJSON style={(feature) => {
           return {
             opacity: 1,
             weight: 1,
             fillOpacity: 1,
-            color: '#4263EB',
-            fillColor: '#4263EB'
+            color: featureColor(feature?.properties.LANGUAGE),
+            fillColor: featureColor(feature?.properties.LANGUAGE)
           }
         }} data={EthnicClans} />
         </LayersControl.Overlay>
-  <LayersControl.Overlay checked name='License Boundary'>
-        <GeoJSON style={(feature) => {
-          return {
-            opacity: 1,
-            weight: 1,
-            fillOpacity: 1,
-            color: '#ADB5BD',
-            fillColor: '#ADB5BD'
-          }
-        }} data={license2} />
-        </LayersControl.Overlay>
         <LayersControl.Overlay checked name='Sublocations'>
-        <GeoJSON style={(feature) => {
+        <GeoJSON onEachFeature={(f, l) => {
+        let PROSPECT = f.properties.NAME;
+        l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Name</strong></td><td>"+PROSPECT+"</td></tr></tbody><table>");
+
+        }} style={(feature) => {
           return {
             opacity: 1,
             weight: 1,
             fillOpacity: 1,
-            color: '#C2255C',
-            fillColor: '#C2255C'
+            color: '#F1F3F5',
+            fillColor: '#FFD43B'
           }
         }} data={sublocations} />
         </LayersControl.Overlay>
-        <LayersControl.Overlay checked name='All outline areas'>
+        <LayersControl.Overlay checked name='License Boundary'>
+        <GeoJSON style={(feature) => {
+          return {
+            opacity: 1,
+            weight: 1,
+            fillOpacity: 1,
+            color: 'black',
+            fillColor: 'transparent'
+          }
+        }} data={license2} />
+        </LayersControl.Overlay>
+        <LayersControl.Overlay name='All outline areas'>
         <GeoJSON style={(feature) => {
           return {
             opacity: 1,
@@ -286,7 +314,7 @@ export default function App() {
         }} data={alloutlineareas} />
         </LayersControl.Overlay>
 
-        <LayersControl.Overlay checked name='Drills'>
+        <LayersControl.Overlay name='Drills'>
         <GeoJSON data={drills} onEachFeature={(f, l) => {
             let DHID = f.properties.DHID;
             let DHtype = f.properties.DHtype;
@@ -298,13 +326,13 @@ export default function App() {
           return new L.CircleMarker(latLng, {
             opacity: 1,
             weight: 2,
-            color: '#FCC419',
-            fillColor: '#FCC419',
+            color: '#5F3DC4',
+            fillColor: '#5F3DC4',
             radius: 3
           })
         }} />
         </LayersControl.Overlay>
-        <LayersControl.Overlay checked name='Artisanal Workings - 1'>
+        <LayersControl.Overlay name='Artisanal Workings - 1'>
         <GeoJSON data={artisanal} onEachFeature={(f, l) => {
         let PROSPECT = f.properties.PROSPECT;
         let LOCAL_NAME = f.properties.LOCAL_NAME;
@@ -323,7 +351,7 @@ export default function App() {
         }} />
 
         </LayersControl.Overlay>
-        <LayersControl.Overlay checked name="Artisanal Workings-2">
+        <LayersControl.Overlay name="Artisanal Workings-2">
         <GeoJSON data={artisanal2} onEachFeature={(f, l) => {
            let PROSPECT = f.properties.PROSPECT;
            let LOCAL_NAME = f.properties.LOCAL_NAME;
@@ -335,8 +363,8 @@ export default function App() {
           return new L.CircleMarker(latLng, {
             opacity: 1,
             weight: 2,
-            color: 'yellow',
-            fillColor: 'yellow',
+            color: '#D9480F',
+            fillColor: '#D9480F',
             radius: 3
           })
         }} />
@@ -475,34 +503,8 @@ export default function App() {
         </Header>
       }
     >
-        <Grid  style={{height: height - 145}} columns={24}>
-          <Grid.Col span={6}>
-          <Stack justify='space-between' sx={(theme) => ({ backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0], height: height - 150 })} >
-    <Box
-      sx={(theme) => ({
-        backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.colors.gray[0],
-        textAlign: 'center',
-        padding: theme.spacing.xl,
-        borderRadius: theme.radius.md,
-        cursor: 'pointer',
-        height: '100%',
 
-        '&:hover': {
-          backgroundColor:
-            theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[1],
-        },
-      })}
-    >
-      <Text>Properties</Text>
-    </Box>
-          </Stack>
-          </Grid.Col>
-          <Grid.Col span={18}>
-            <MapPanel />
-          </Grid.Col>
-        </Grid>
-
-
+      <MapPanel />
     </AppShell>
     </MantineProvider>
     </ColorSchemeProvider>

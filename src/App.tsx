@@ -35,8 +35,6 @@ import artisanal2 from './geodata/artisanal2';
 import sublocations from './geodata/sublocations';
 import alloutlineareas from './geodata/AllOutlineAreas';
 import EthnicClans from './geodata/EthnicClans';
-import GovernmentOffices from './geodata/GovernmentOffices';
-import PoliceStations from './geodata/PoliceStations';
 
 const useStyles = createStyles((theme) => ({
   header: {

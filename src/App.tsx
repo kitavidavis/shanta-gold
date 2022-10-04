@@ -19,9 +19,7 @@ import {
   Box,
   Switch,
   Select,
-  Stack,
-  Card,
-  MultiSelect
+  Stack
 } from '@mantine/core';
 import { MantineProvider, ColorSchemeProvider, ColorScheme, createStyles, Input } from '@mantine/core';
 import { useColorScheme, useViewportSize } from '@mantine/hooks';
@@ -204,8 +202,6 @@ export default function App() {
   const [center, setCenter] = useState<any>([0.004, 34.536979]);
   const [zoom, setZoom] = useState<number>(14)
   const [basemap, setBasemap] = useState(false);
-  const [concurrent, setConcurrent] = useState(false);
-  const [cats, setCats] = useState<any>([]);
   const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
@@ -302,35 +298,18 @@ export default function App() {
       aside={
 
           <MediaQuery smallerThan="sm" styles={{ display: 'none' }}>
-          <Aside p="md" hiddenBreakpoint="sm" sx={(theme) => ({top: 0, bottom: 0, height: height})} width={{ sm: 300, lg: 400 }}>
-          <Switch mb={10} label="Toggle Basemap" checked={basemap} onChange={() => setBasemap(!basemap)} size="md" />
+          <Aside p="md" hiddenBreakpoint="sm" width={{ sm: 300, lg: 400 }}>
 
-          <Switch mb={10} label="Toggle Layer Control" checked={collapsed} onChange={() => setCollapsed(!collapsed)} size="md" />
-
-            <Switch checked={concurrent} onChange={() => {
-              setCats([]);
-              setCategory("");
-              setConcurrent(!concurrent)
-            }} mb={10} label="Concurrent View" />
             <Input.Wrapper mb={30} label="Data Source" description="Choose data to show">
-              {concurrent ? (
-                <MultiSelect value={cats} onChange={setCats} data={[
-                  {label: "Ramula Option One", value: "0"},
-                {label: "Ramula Option 2", value: "1"},
-                {label: "Ramula Option 3", value: "2"},
-                {label: "Dhene-Ramula Option", value: "3"}
-              ]} />
-              ) : (
-                              <Select value={category} onChange={(val: string) => {setCategory(val)}} data={[
-                                {label: "Ramula Option One", value: "0"},
-                              {label: "Ramula Option 2", value: "1"},
-                              {label: "Ramula Option 3", value: "2"},
-                              {label: "Dhene-Ramula Option", value: "3"}
-                            ]} />
-              )}
+              <Select value={category} onChange={(val: string) => {setCategory(val)}} data={[
+                {label: "Ramula Option One", value: "0"},
+              {label: "Ramula Option 2", value: "1"},
+              {label: "Ramula Option 3", value: "2"},
+              {label: "Dhene-Ramula Option", value: "3"}
+            ]} />
             </Input.Wrapper>
           {ready ? (  
-            <Card sx={(theme) => ({bottom: 0,})} shadow="sm">
+            <>
           <Title mb={30} order={4}>Summary Information</Title>
               <Text mb={20}>Category: <strong>{handleCategory(category)}</strong></Text>
                           <SimpleGrid cols={1} breakpoints={[{ maxWidth: 'sm', cols: 1 }]}>
@@ -364,7 +343,7 @@ export default function App() {
                     </Paper>
               
                           </SimpleGrid>
-                          </Card>
+                          </>
             ) : null}
           
           </Aside>
@@ -394,7 +373,16 @@ export default function App() {
           </Group>
           
           <Group>
-                </Group>
+            <div className={classes.root}>
+              Toggle Basemap
+            </div>
+            <Switch checked={basemap} onChange={() => setBasemap(!basemap)} size="md" />
+
+      <div className={classes.root}>
+        <Text>Toggle Layer control</Text>
+      </div>
+      <Switch checked={collapsed} onChange={() => setCollapsed(!collapsed)} size="md" />
+    </Group>
           </div>
         </Header>
       }
@@ -424,8 +412,8 @@ export default function App() {
     </LayersControl.BaseLayer>
         </>
       ) : null}
-{ !concurrent ? category === "0" ? (
-    <LayersControl.Overlay checked={category === "0" || cats.includes("0") ? true : false} name="Ramula Option 1">
+{category === "0" ? (
+    <LayersControl.Overlay checked={category === "0" ? true : false} name="Ramula Option 1">
     <LayerGroup>
     {Ramula1.features.filter((item) => {
         return item.properties.Name === "Property Area Ramula_450ha"
@@ -502,7 +490,7 @@ export default function App() {
       </LayerGroup>
   </LayersControl.Overlay>
 ) : category === "1" ? (
-  <LayersControl.Overlay checked={category === "1" || cats.includes("1") ? true : false} name="Ramula Option 2">
+  <LayersControl.Overlay checked={category === "1" ? true : false} name="Ramula Option 2">
   <LayerGroup>
     {Ramula2.features.filter((item) => {
       return item.properties.Name === "Ramula Option2 Property Boundary"
@@ -577,7 +565,7 @@ export default function App() {
   </LayerGroup>
 </LayersControl.Overlay>
 ) : category === "2" ? (
-  <LayersControl.Overlay checked={category === "2" || cats.includes("2") ? true : false} name="Ramula Option 3">
+  <LayersControl.Overlay checked={category === "2" ? true : false} name="Ramula Option 3">
   <LayerGroup>
     {RamulaOption3.features.filter((item) => {
       return item.properties.Name === "Ramula Option 3 Property boundary"
@@ -652,7 +640,7 @@ export default function App() {
   </LayerGroup>
 </LayersControl.Overlay>
 ) : category === "3" ? (
-  <LayersControl.Overlay checked={category === "3" || cats.includes("3") ? true : false} name="Dhene-Ramula Option">
+  <LayersControl.Overlay checked={category === "3" ? true : false} name="Dhene-Ramula Option">
     <LayerGroup>
       {DheneRamulaOption.features.map((item: any, index: number) => {
         return (
@@ -688,277 +676,7 @@ export default function App() {
       })}
     </LayerGroup>
   </LayersControl.Overlay>
-) : null : (
-  cats.map((item:string, index:number) => {
-    return (
-      item === "0" ? (
-        <LayersControl.Overlay checked={category === "0" || cats.includes("0") ? true : false} name="Ramula Option 1">
-        <LayerGroup>
-        {Ramula1.features.filter((item) => {
-            return item.properties.Name === "Property Area Ramula_450ha"
-          }).map((item: any, index: number) => {
-            return (
-              <GeoJSON style={(feature) => {
-                return {
-                  opacity: 1,
-                  weight: 2,
-                  dashArray: "5, 5",
-                  color: "white",
-                  fillColor: "transparent"
-                }
-              }} data={item} onEachFeature={(feature, layer) => {
-                layer.on({
-                  click: function(e) {
-                    calculateArea(feature, "0");
-                  },
-    
-                  mouseover: function(e) {
-                      e.target.setStyle({
-                        color: "#D9480F"
-                      });
-                      calculateArea(feature, "0");
-                  },
-    
-                  mouseout: function(e){
-                      e.target.setStyle({
-                        color: "white"
-                      });
-                    }
-    
-                })
-            }} />
-            )
-          })}
-    
-          {Ramula1.features.filter((item) => {
-            return item.properties.Name !== "Property Area Ramula_450ha"
-          }).map((item: any, index: number) => {
-            return (
-              <GeoJSON key={index} style={(feature) => {
-                return {
-                  opacity: 1,
-                  weight: 2,
-                  fillOpacity: 1,
-    
-                  color: "white",
-                  fillColor: "transparent"
-                }
-              }} data={item} onEachFeature={(feature: any, layer: any) => {
-                layer.on({
-                  click: function(e:any) {
-                    calculateArea(feature, "0");
-                  },
-    
-                  mouseover: function(e:any) {
-                      e.target.setStyle({
-                        color: "#D9480F"
-                      });
-                      calculateArea(feature, "0");
-                  },
-    
-                  mouseout: function(e:any){
-                      e.target.setStyle({
-                        color: "white"
-                      });
-                    }
-    
-                })
-            }}/>
-            )
-          })}
-          </LayerGroup>
-      </LayersControl.Overlay>
-    ) : item === "1" ? (
-      <LayersControl.Overlay checked={category === "1" || cats.includes("1") ? true : false} name="Ramula Option 2">
-      <LayerGroup>
-        {Ramula2.features.filter((item) => {
-          return item.properties.Name === "Ramula Option2 Property Boundary"
-        }).map((item: any, index: number) => {
-          return (
-            <GeoJSON style={(feature) => {
-              return {
-                opacity: 1,
-                weight: 2,
-                dashArray: "5, 5",
-                color: "white",
-                fillColor: "transparent"
-              }
-            }} data={item} onEachFeature={(feature, layer) => {
-              layer.on({
-                click: function(e) {
-                  calculateArea(feature, "1");
-                },
-    
-                mouseover: function(e) {
-                    e.target.setStyle({
-                      color: "#D9480F"
-                    });
-                    calculateArea(feature, "1");
-                },
-    
-                mouseout: function(e){
-                    e.target.setStyle({
-                      color: "white"
-                    });
-                  }
-    
-              })
-          }} />
-          )
-        })}
-    
-        {Ramula2.features.filter((item) => {
-          return item.properties.Name !== "Ramula Option2 Property Boundary"
-        }).map((item: any, index: number) => {
-          return (
-            <GeoJSON style={(feature) => {
-              return {
-                opacity: 1,
-                weight: 2,
-                color: "white",
-                fillColor: "transparent"
-            }
-            }} data={item} onEachFeature={(feature, layer) => {
-              layer.on({
-                click: function(e) {
-                  calculateArea(feature, "1");
-                },
-    
-                mouseover: function(e) {
-                    e.target.setStyle({
-                      color: "#D9480F"
-                    });
-                    calculateArea(feature, "1");
-                },
-    
-                mouseout: function(e){
-                    e.target.setStyle({
-                      color: "white"
-                    });
-                  }
-    
-              })
-          }} />
-          )
-        })}
-      </LayerGroup>
-    </LayersControl.Overlay>
-    ) : item === "2" ? (
-      <LayersControl.Overlay checked={category === "2" || cats.includes("2") ? true : false} name="Ramula Option 3">
-      <LayerGroup>
-        {RamulaOption3.features.filter((item) => {
-          return item.properties.Name === "Ramula Option 3 Property boundary"
-        }).map((item: any, index: any) => {
-          return (
-            <GeoJSON style={(feature) => {
-              return {
-                color: "white",
-                dashArray: "5, 5",
-                fillColor: "transparent",
-                weight: 2,
-                opacity: 1
-              }
-            }} data={item} onEachFeature={(feature, layer) => {
-              layer.on({
-                click: function(e) {
-                  calculateArea(feature, "2");
-                },
-    
-                mouseover: function(e) {
-                    e.target.setStyle({
-                      color: "#D9480F"
-                    });
-                    calculateArea(feature, "2");
-                },
-    
-                mouseout: function(e){
-                    e.target.setStyle({
-                      color: "white"
-                    });
-                  }
-    
-              })
-          }} />
-          )
-        })}
-    
-        {RamulaOption3.features.filter((item) => {
-          return item.properties.Name !== "Ramula Option 3 Property boundary"
-        }).map((item: any, index: any) => {
-          return (
-            <GeoJSON style={(feature) => {
-              return {
-                color: "white",
-                fillColor: "transparent",
-                weight: 2,
-                opacity: 1
-              }
-            }} data={item} onEachFeature={(feature, layer) => {
-              layer.on({
-                click: function(e) {
-                  calculateArea(feature, "2");
-                },
-    
-                mouseover: function(e) {
-                    e.target.setStyle({
-                      color: "#D9480F"
-                    });
-                    calculateArea(feature, "2");
-                },
-    
-                mouseout: function(e){
-                    e.target.setStyle({
-                      color: "white"
-                    });
-                  }
-    
-              })
-          }} />
-          )
-        })}
-      </LayerGroup>
-    </LayersControl.Overlay>
-    ) : item === "3" ? (
-      <LayersControl.Overlay checked={category === "3" || cats.includes("3") ? true : false} name="Dhene-Ramula Option">
-        <LayerGroup>
-          {DheneRamulaOption.features.map((item: any, index: number) => {
-            return (
-              <GeoJSON style={(feature) => {
-                return {
-                  color: "white",
-                  fillColor: "transparent",
-                  weight: 2,
-                  opacity: 1
-                }
-              }} data={item} onEachFeature={(feature, layer) => {
-                layer.on({
-                  click: function(e) {
-                    calculateArea(feature, "3");
-                  },
-      
-                  mouseover: function(e) {
-                      e.target.setStyle({
-                        color: "#D9480F"
-                      });
-                      calculateArea(feature, "3");
-                  },
-      
-                  mouseout: function(e){
-                      e.target.setStyle({
-                        color: "white"
-                      });
-                    }
-      
-                })
-            }} />
-            )
-          })}
-        </LayerGroup>
-      </LayersControl.Overlay>
-    ) : null
-    )
-  })
-)}
+) : null}
 {/*
   <LayersControl.Overlay name='Ethnic Clans'>
         <GeoJSON style={(feature) => {

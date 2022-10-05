@@ -590,6 +590,7 @@ export default function App() {
               
           </Group>
           
+          <MediaQuery smallerThan="md" styles={{display: "none"}}>
           <Group>
             <div className={classes.root}>
               {basemap ? "Hide Basemap" : "Show Basemap"}
@@ -597,6 +598,7 @@ export default function App() {
             <Switch checked={basemap} onChange={() => setBasemap(!basemap)} size="md" />
 
         </Group>
+          </MediaQuery>
           </div>
         </Header>
       }
@@ -969,19 +971,14 @@ export default function App() {
   </LayersControl.Overlay>
 
   <LayersControl.Overlay checked name="Primary Substations" >
-    <GeoJSON data={PrimarySubstations} style={(feature) => {
-      return {
-        color: "#5C940D",
-        fillColor: "#5C940D",
-        weight: 0.5
-      }
-    }} pointToLayer={(f, latLng) => {
+    <GeoJSON data={PrimarySubstations}  pointToLayer={(f, latLng) => {
       return new L.CircleMarker(latLng, {
         opacity: 1,
         weight: 2,
         color: '#5C940D',
         fillColor: '#5C940D',
-        radius: 3
+        fillOpacity: 1,
+        radius: 15
       })
     }}  onEachFeature={(f, l) => {
       l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Name</strong></td><td>"+f.properties.Location41+"</td></tr></tbody><table>");

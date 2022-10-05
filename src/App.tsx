@@ -213,6 +213,7 @@ export default function App() {
   const [prints2, setPrints2] = useState<any>(null);
   const [prints3, setPrints3] = useState<any>(null);
   const [prints4, setPrints4] = useState<any>(null);
+  const [prints5, setPrints5] = useState<any>(null);
   const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
@@ -285,9 +286,45 @@ export default function App() {
       setPrints3(arr.length)
   }
 
+  const preprocess4 = () => {
+
+    var poly = turf.polygon(DheneRamulaOption.features[0].geometry.coordinates[0]);
+    let arr = [];
+
+    for(let i=0; i<BuildingFootprints.features.length; i++){
+      let pt = turf.polygon(BuildingFootprints.features[i].geometry.coordinates[0]);
+      let centroid = turf.centroid(pt);
+
+      if(turf.booleanPointInPolygon(centroid, poly)){
+        arr.push(BuildingFootprints.features[i]);
+      }
+    }
+
+    setPrints4(arr.length)
+  }
+
+  const preprocess5 = () => {
+
+    var poly = turf.polygon(DheneRamulaOption.features[1].geometry.coordinates[0]);
+    let arr = [];
+
+    for(let i=0; i<BuildingFootprints.features.length; i++){
+      let pt = turf.polygon(BuildingFootprints.features[i].geometry.coordinates[0]);
+      let centroid = turf.centroid(pt);
+
+      if(turf.booleanPointInPolygon(centroid, poly)){
+        arr.push(BuildingFootprints.features[i]);
+      }
+    }
+
+    setPrints5(arr.length)
+  }
+
     preprocess();
     preprocess2();
     preprocess3();
+    preprocess4();
+    preprocess5();
   }, []);
 
   const styleDrills = () => {
@@ -462,6 +499,31 @@ export default function App() {
               </div>
             </Group>
           </Paper>
+
+          <Paper mt="md" withBorder radius="md" p="xs">
+            <Group>
+            <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[{ value: (prints3 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            label={
+              <Center>
+                <ArrowUpRight />
+              </Center>
+            }
+          />
+    
+              <div>
+                <Text color="dimmed">
+                  Dhene Ramula Option
+                </Text>
+                <Text weight={700} size="xl" >
+                {prints4 + prints5}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
           </>
             ) : null}
           {ready && !showbuildings ? (  
@@ -492,7 +554,7 @@ export default function App() {
                             Total Area
                           </Text>
                           <Text weight={700} size="xl">
-                            {(area / 10000).toFixed(2) + "Ha"}
+                            {(area / 10000).toFixed(2) + "Ha / "+(area / 4046.86).toFixed(2) + "Acres" }
                           </Text>
                         </div>
                       </Group>

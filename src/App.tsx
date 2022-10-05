@@ -39,7 +39,12 @@ import Ramula1 from './geodata/ramula';
 import Ramula2 from "./geodata/Ramula-option2";
 import RamulaOption3 from './geodata/Ramula-Option3';
 import DheneRamulaOption from './geodata/Dhene-Ramula-Options';
-import { AnyCnameRecord } from 'dns';
+import Powerlines from "./geodata/Powerlines";
+import Powerlines11 from "./geodata/PowerLines-11";
+import { Transformers1, Transformers2, Transformers3 } from "./geodata/electricity-distribution-transformers";
+import Streams from "./geodata/Streams";
+import PrimarySubstations from "./geodata/primary-substations";
+import BuildingFootprints from "./geodata/building-footprints";
 
 const turf = require("@turf/turf");
 
@@ -199,9 +204,15 @@ export default function App() {
   const [category, setCategory] = useState<string>("");
   const [ready, setReady] = useState(false);
   const [seamless, setSeamless] = useState(false);
-  const [center, setCenter] = useState<any>([0.004, 34.536979]);
-  const [zoom, setZoom] = useState<number>(14)
+  const [center, setCenter] = useState<any>([-0.003, 34.515979]);
+  const [zoom, setZoom] = useState<number>(13)
   const [basemap, setBasemap] = useState(false);
+  const [boundary, setBoundary] = useState<string>("0");
+  const [showbuildings, setShowBuildings] = useState(true);
+  const [prints1, setPrints1] = useState<number>(0);
+  const [prints2, setPrints2] = useState<any>(null);
+  const [prints3, setPrints3] = useState<any>(null);
+  const [prints4, setPrints4] = useState<any>(null);
   const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
@@ -209,6 +220,75 @@ export default function App() {
   useEffect(() => {
     setColorScheme(preferredColorScheme)
   }, [preferredColorScheme])
+
+  useEffect(() => {
+    const preprocess = () => {
+          let idx = Ramula1.features.findIndex((obj => obj.properties.Name === "Property Area Ramula_450ha"))
+          if(idx === -1) {
+            return false;
+          }
+  
+          var poly = turf.polygon(Ramula1.features[idx].geometry.coordinates[0]);
+          let arr = [];
+  
+          for(let i=0; i<BuildingFootprints.features.length; i++){
+            let pt = turf.polygon(BuildingFootprints.features[i].geometry.coordinates[0]);
+            let centroid = turf.centroid(pt);
+  
+            if(turf.booleanPointInPolygon(centroid, poly)){
+              arr.push(BuildingFootprints.features[i]);
+            }
+          }
+  
+          setPrints1(arr.length)
+      }
+
+      const preprocess2 = () => {
+        let idx = Ramula2.features.findIndex((obj => obj.properties.Name === "Ramula Option2 Property Boundary"))
+        if(idx === -1) {
+          return false;
+        }
+
+        var poly = turf.polygon(Ramula2.features[idx].geometry.coordinates[0]);
+        let arr = [];
+
+        for(let i=0; i<BuildingFootprints.features.length; i++){
+          let pt = turf.polygon(BuildingFootprints.features[i].geometry.coordinates[0]);
+          let centroid = turf.centroid(pt);
+
+          if(turf.booleanPointInPolygon(centroid, poly)){
+            arr.push(BuildingFootprints.features[i]);
+          }
+        }
+
+        setPrints2(arr.length)
+    }
+
+    const preprocess3 = () => {
+      let idx = RamulaOption3.features.findIndex((obj => obj.properties.Name === "Ramula Option 3 Property boundary"))
+      if(idx === -1) {
+        return false;
+      }
+
+      var poly = turf.polygon(RamulaOption3.features[idx].geometry.coordinates[0]);
+      let arr = [];
+
+      for(let i=0; i<BuildingFootprints.features.length; i++){
+        let pt = turf.polygon(BuildingFootprints.features[i].geometry.coordinates[0]);
+        let centroid = turf.centroid(pt);
+
+        if(turf.booleanPointInPolygon(centroid, poly)){
+          arr.push(BuildingFootprints.features[i]);
+        }
+      }
+
+      setPrints3(arr.length)
+  }
+
+    preprocess();
+    preprocess2();
+    preprocess3();
+  }, []);
 
   const styleDrills = () => {
     return {
@@ -268,6 +348,12 @@ export default function App() {
     setReady(true);
   }
 
+  const resetToDefaults = () => {
+    setReady(false);
+    setArea(0);
+    setCategory("");
+  }
+
   const handleCategory = (str: string) => {
     switch(str){
       case "0":
@@ -299,16 +385,86 @@ export default function App() {
 
           <MediaQuery smallerThan="sm" styles={{ display: 'none' }}>
           <Aside p="md" hiddenBreakpoint="sm" width={{ sm: 300, lg: 400 }}>
+            <Switch mb={30} mt={10} label="Show Building Statistics" checked={showbuildings} onChange={() => {setShowBuildings(!showbuildings)}} />
+            {showbuildings ? (
+              <>
+              <Text mb={15}>Total Buildings:<strong>{BuildingFootprints.features.length}</strong> </Text>
+            <Paper withBorder radius="md" p="xs">
+            <Group>
+            <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[{ value: (prints1 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            label={
+              <Center>
+                <ArrowUpRight />
+              </Center>
+            }
+          />
+    
+              <div>
+                <Text color="dimmed">
+                  Ramula Option 1
+                </Text>
+                <Text weight={700} size="xl" >
+                {prints1}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+          <Paper mt="md" withBorder radius="md" p="xs">
+            <Group>
+            <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[{ value: (prints2 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            label={
+              <Center>
+                <ArrowUpRight />
+              </Center>
+            }
+          />
+    
+              <div>
+                <Text color="dimmed">
+                  Ramula Option 2
+                </Text>
+                <Text weight={700} size="xl" >
+                {prints2}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
 
-            <Input.Wrapper mb={30} label="Data Source" description="Choose data to show">
-              <Select value={category} onChange={(val: string) => {setCategory(val)}} data={[
-                {label: "Ramula Option One", value: "0"},
-              {label: "Ramula Option 2", value: "1"},
-              {label: "Ramula Option 3", value: "2"},
-              {label: "Dhene-Ramula Option", value: "3"}
-            ]} />
-            </Input.Wrapper>
-          {ready ? (  
+          <Paper mt="md" withBorder radius="md" p="xs">
+            <Group>
+            <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[{ value: (prints3 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            label={
+              <Center>
+                <ArrowUpRight />
+              </Center>
+            }
+          />
+    
+              <div>
+                <Text color="dimmed">
+                  Ramula Option 3
+                </Text>
+                <Text weight={700} size="xl" >
+                {prints3}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+          </>
+            ) : null}
+          {ready && !showbuildings ? (  
             <>
           <Title mb={30} order={4}>Summary Information</Title>
               <Text mb={20}>Category: <strong>{handleCategory(category)}</strong></Text>
@@ -374,21 +530,17 @@ export default function App() {
           
           <Group>
             <div className={classes.root}>
-              Toggle Basemap
+              {basemap ? "Hide Basemap" : "Show Basemap"}
             </div>
             <Switch checked={basemap} onChange={() => setBasemap(!basemap)} size="md" />
 
-      <div className={classes.root}>
-        <Text>Toggle Layer control</Text>
-      </div>
-      <Switch checked={collapsed} onChange={() => setCollapsed(!collapsed)} size="md" />
-    </Group>
+        </Group>
           </div>
         </Header>
       }
     >
 
-<MapContainer style={{height: '100%', width: '100%', backgroundColor: "black"}} center={center} zoom={zoom}  scrollWheelZoom={true}>
+<MapContainer style={{height: '100%', width: '100%', backgroundColor: "black", padding: 0}} center={center} zoom={zoom}  scrollWheelZoom={true}>
 <LayersControl collapsed={collapsed} position='topright'>
       {basemap ? (
         <>
@@ -412,8 +564,7 @@ export default function App() {
     </LayersControl.BaseLayer>
         </>
       ) : null}
-{category === "0" ? (
-    <LayersControl.Overlay checked={category === "0" ? true : false} name="Ramula Option 1">
+    <LayersControl.Overlay checked name="Ramula Option 1">
     <LayerGroup>
     {Ramula1.features.filter((item) => {
         return item.properties.Name === "Property Area Ramula_450ha"
@@ -444,6 +595,8 @@ export default function App() {
                   e.target.setStyle({
                     color: "white"
                   });
+
+                  resetToDefaults();
                 }
 
             })
@@ -481,6 +634,7 @@ export default function App() {
                   e.target.setStyle({
                     color: "white"
                   });
+                  resetToDefaults();
                 }
 
             })
@@ -489,8 +643,7 @@ export default function App() {
       })}
       </LayerGroup>
   </LayersControl.Overlay>
-) : category === "1" ? (
-  <LayersControl.Overlay checked={category === "1" ? true : false} name="Ramula Option 2">
+  <LayersControl.Overlay checked name="Ramula Option 2">
   <LayerGroup>
     {Ramula2.features.filter((item) => {
       return item.properties.Name === "Ramula Option2 Property Boundary"
@@ -521,6 +674,7 @@ export default function App() {
                 e.target.setStyle({
                   color: "white"
                 });
+                resetToDefaults();
               }
 
           })
@@ -556,6 +710,7 @@ export default function App() {
                 e.target.setStyle({
                   color: "white"
                 });
+                resetToDefaults();
               }
 
           })
@@ -564,8 +719,7 @@ export default function App() {
     })}
   </LayerGroup>
 </LayersControl.Overlay>
-) : category === "2" ? (
-  <LayersControl.Overlay checked={category === "2" ? true : false} name="Ramula Option 3">
+  <LayersControl.Overlay checked name="Ramula Option 3">
   <LayerGroup>
     {RamulaOption3.features.filter((item) => {
       return item.properties.Name === "Ramula Option 3 Property boundary"
@@ -596,6 +750,7 @@ export default function App() {
                 e.target.setStyle({
                   color: "white"
                 });
+                resetToDefaults();
               }
 
           })
@@ -631,6 +786,7 @@ export default function App() {
                 e.target.setStyle({
                   color: "white"
                 });
+                resetToDefaults();
               }
 
           })
@@ -639,8 +795,7 @@ export default function App() {
     })}
   </LayerGroup>
 </LayersControl.Overlay>
-) : category === "3" ? (
-  <LayersControl.Overlay checked={category === "3" ? true : false} name="Dhene-Ramula Option">
+  <LayersControl.Overlay checked name="Dhene-Ramula Option">
     <LayerGroup>
       {DheneRamulaOption.features.map((item: any, index: number) => {
         return (
@@ -668,6 +823,7 @@ export default function App() {
                   e.target.setStyle({
                     color: "white"
                   });
+                  resetToDefaults();
                 }
   
             })
@@ -676,7 +832,99 @@ export default function App() {
       })}
     </LayerGroup>
   </LayersControl.Overlay>
-) : null}
+  <LayersControl.Overlay checked name="Electricity Distribution Transformers" >
+    <LayerGroup>
+      <GeoJSON data={Transformers1} onEachFeature={(f, l) => {
+            l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>RCC1</strong></td><td>"+f.properties.RCC1+"</td></tr><tr scope='row'><td><strong>County2</strong></td><td>"+f.properties.County2+"</td></tr><tr scope='row'><td><strong>Branch3</strong></td><td>"+f.properties.Branch3+"</td></tr><tr scope='row'><td><strong>Substation9</strong></td><td>"+f.properties.Substati9+"</td></tr><tr scope='row'><td><strong>DCS_Cate15</strong></td><td>"+f.properties.DCS_Cate15+"</td></tr><tr scope='row' ><td><strong>Modifyin25</strong></td><td>"+f.properties.Modifyin25+"</td></tr><tr scope='row' ><td><strong>Origin_o27</strong></td><td>"+f.properties.Origin_o27+"</td></tr><tr scope='row'><td><strong>Feeder_o28</strong></td><td>"+f.properties.Feeder_o28+"</td></tr><tr scope='row'><td><strong>Substation29</strong></td><td>"+f.properties.Substati29+"</td></tr><tr scope='row'><td><strong>HT_Isola32</strong></td><td>"+f.properties.HT_Isola32+"</td></tr><tr scope='row'><td><strong>Road_Str38</strong></td><td>"+f.properties.Road_Str38+"</td></tr><tr scope='row'><td><strong>Physical39</strong></td><td>"+f.properties.Physical39+"</td></tr><tr scope='row'><td><strong>Road</strong></td><td>"+f.properties.Road+"</td></tr></tbody><table>");
+        }} pointToLayer={(f, latLng) => {
+          return new L.CircleMarker(latLng, {
+            opacity: 1,
+            weight: 2,
+            color: 'yellow',
+            fillColor: 'yellow',
+            radius: 3
+          })
+        }}   />
+      <GeoJSON data={Transformers2} onEachFeature={(f, l) => {
+            l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>RCC1</strong></td><td>"+f.properties.RCC1+"</td></tr><tr scope='row'><td><strong>County2</strong></td><td>"+f.properties.County2+"</td></tr><tr scope='row'><td><strong>Branch3</strong></td><td>"+f.properties.Branch3+"</td></tr><tr scope='row'><td><strong>Substation9</strong></td><td>"+f.properties.Substati9+"</td></tr><tr scope='row'><td><strong>DCS_Cate15</strong></td><td>"+f.properties.DCS_Cate15+"</td></tr><tr scope='row' ><td><strong>Modifyin25</strong></td><td>"+f.properties.Modifyin25+"</td></tr><tr scope='row' ><td><strong>Origin_o27</strong></td><td>"+f.properties.Origin_o27+"</td></tr><tr scope='row'><td><strong>Feeder_o28</strong></td><td>"+f.properties.Feeder_o28+"</td></tr><tr scope='row'><td><strong>Substation29</strong></td><td>"+f.properties.Substati29+"</td></tr><tr scope='row'><td><strong>HT_Isola32</strong></td><td>"+f.properties.HT_Isola32+"</td></tr><tr scope='row'><td><strong>Road_Str38</strong></td><td>"+f.properties.Road_Str38+"</td></tr><tr scope='row'><td><strong>Physical39</strong></td><td>"+f.properties.Physical39+"</td></tr><tr scope='row'><td><strong>Road</strong></td><td>"+f.properties.Road+"</td></tr></tbody><table>");
+        }} pointToLayer={(f, latLng) => {
+          return new L.CircleMarker(latLng, {
+            opacity: 1,
+            weight: 2,
+            color: 'yellow',
+            fillColor: 'yellow',
+            radius: 3
+          })
+        }}  />
+      <GeoJSON data={Transformers3} onEachFeature={(f, l) => {
+            l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>RCC1</strong></td><td>"+f.properties.RCC1+"</td></tr><tr scope='row'><td><strong>County2</strong></td><td>"+f.properties.County2+"</td></tr><tr scope='row'><td><strong>Branch3</strong></td><td>"+f.properties.Branch3+"</td></tr><tr scope='row'><td><strong>Substation9</strong></td><td>"+f.properties.Substati9+"</td></tr><tr scope='row'><td><strong>DCS_Cate15</strong></td><td>"+f.properties.DCS_Cate15+"</td></tr><tr scope='row' ><td><strong>Modifyin25</strong></td><td>"+f.properties.Modifyin25+"</td></tr><tr scope='row' ><td><strong>Origin_o27</strong></td><td>"+f.properties.Origin_o27+"</td></tr><tr scope='row'><td><strong>Feeder_o28</strong></td><td>"+f.properties.Feeder_o28+"</td></tr><tr scope='row'><td><strong>Substation29</strong></td><td>"+f.properties.Substati29+"</td></tr><tr scope='row'><td><strong>HT_Isola32</strong></td><td>"+f.properties.HT_Isola32+"</td></tr><tr scope='row'><td><strong>Road_Str38</strong></td><td>"+f.properties.Road_Str38+"</td></tr><tr scope='row'><td><strong>Physical39</strong></td><td>"+f.properties.Physical39+"</td></tr><tr scope='row'><td><strong>Road</strong></td><td>"+f.properties.Road+"</td></tr></tbody><table>");
+        }} pointToLayer={(f, latLng) => {
+          return new L.CircleMarker(latLng, {
+            opacity: 1,
+            weight: 2,
+            color: 'yellow',
+            fillColor: 'yellow',
+            radius: 3
+          })
+        }}   />
+    </LayerGroup>
+  </LayersControl.Overlay>
+
+  <LayersControl.Overlay checked name="Power Transmission Lines(33KV)" >
+    <GeoJSON data={Powerlines} style={(feature) => {
+      return {
+        color: "blue",
+        fillColor: "blue",
+        weight: 2
+      }
+    }} onEachFeature={(f, l) => {
+      l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>RCC1</strong></td><td>"+f.properties.RCC1+"</td></tr><tr scope='row'><td><strong>County2</strong></td><td>"+f.properties.County2+"</td></tr><tr scope='row'><td><strong>Branch3</strong></td><td>"+f.properties.Branch3+"</td></tr><tr scope='row' ><td><strong>Origin_o20</strong></td><td>"+f.properties.Origin_o20+"</td></tr><tr scope='row'><td><strong>Feeder_o21</strong></td><td>"+f.properties.Feeder_o21+"</td></tr><tr scope='row'><td><strong>Voltage48</strong></td><td>"+f.properties.voltage48+"</td></tr><tr scope='row'><td><strong>Length(m)</strong></td><td>"+f.properties.Length_m_+"</td></tr></tbody><table>");
+  }} />
+  </LayersControl.Overlay>
+
+  <LayersControl.Overlay checked name="Power Transmission Lines(11KV)" >
+    <GeoJSON data={Powerlines11} style={(feature) => {
+      return {
+        color: "red",
+        fillColor: "red",
+        weight: 2
+      }
+    }} onEachFeature={(f, l) => {
+      l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>RCC1</strong></td><td>"+f.properties.RCC1+"</td></tr><tr scope='row'><td><strong>County2</strong></td><td>"+f.properties.County2+"</td></tr><tr scope='row'><td><strong>Branch3</strong></td><td>"+f.properties.Branch3+"</td></tr><tr scope='row' ><td><strong>Origin_o20</strong></td><td>"+f.properties.Origin_o20+"</td></tr><tr scope='row'><td><strong>Feeder_o21</strong></td><td>"+f.properties.Feeder_o21+"</td></tr><tr scope='row'><td><strong>Voltage48</strong></td><td>"+f.properties.voltage48+"</td></tr><tr scope='row'><td><strong>Length(m)</strong></td><td>"+f.properties.Length_m_+"</td></tr></tbody><table>");
+  }} />
+  </LayersControl.Overlay>
+
+  <LayersControl.Overlay checked name="Streams" >
+    <GeoJSON data={Streams} style={(feature) => {
+      return {
+        color: "#3BC9DB",
+        fillColor: "#3BC9DB",
+        weight: 0.5
+      }
+    }} onEachFeature={(f, l) => {
+      l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Name</strong></td><td>"+f.properties.NAME+"</td></tr></tbody><table>");
+  }} />
+  </LayersControl.Overlay>
+
+  <LayersControl.Overlay checked name="Primary Substations" >
+    <GeoJSON data={PrimarySubstations} style={(feature) => {
+      return {
+        color: "#5C940D",
+        fillColor: "#5C940D",
+        weight: 0.5
+      }
+    }} pointToLayer={(f, latLng) => {
+      return new L.CircleMarker(latLng, {
+        opacity: 1,
+        weight: 2,
+        color: '#5C940D',
+        fillColor: '#5C940D',
+        radius: 3
+      })
+    }}  onEachFeature={(f, l) => {
+      l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Name</strong></td><td>"+f.properties.Location41+"</td></tr></tbody><table>");
+  }} />
+  </LayersControl.Overlay>
 {/*
   <LayersControl.Overlay name='Ethnic Clans'>
         <GeoJSON style={(feature) => {
@@ -727,61 +975,6 @@ export default function App() {
         }} data={alloutlineareas} />
         </LayersControl.Overlay>
 
-        <LayersControl.Overlay name='Drills'>
-        <GeoJSON data={drills} onEachFeature={(f, l) => {
-            let DHID = f.properties.DHID;
-            let DHtype = f.properties.DHtype;
-            let CollarSurv = f.properties.CollarSurv;
-            let PROSPECT = f.properties.PROSPECT;
-            let TENEMENTID = f.properties.TENEMENTID;
-            l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>DHID</strong></td><td>"+DHID+"</td></tr><tr scope='row'><td><strong>DHtype</strong></td><td>"+DHtype+"</td></tr><tr scope='row'><td><strong>CollarSurv</strong></td><td>"+CollarSurv+"</td></tr><tr scope='row'><td><strong>Prospect</strong></td><td>"+PROSPECT+"</td></tr><tr scope='row'><td><strong>Tenement ID</strong></td><td>"+TENEMENTID+"</td></tr></tbody><table>");
-        }} pointToLayer={(f, latLng) => {
-          return new L.CircleMarker(latLng, {
-            opacity: 1,
-            weight: 2,
-            color: '#5F3DC4',
-            fillColor: '#5F3DC4',
-            radius: 3
-          })
-        }} />
-        </LayersControl.Overlay>
-        <LayersControl.Overlay name='Artisanal Workings - 1'>
-        <GeoJSON data={artisanal} onEachFeature={(f, l) => {
-        let PROSPECT = f.properties.PROSPECT;
-        let LOCAL_NAME = f.properties.LOCAL_NAME;
-        let TYPE = f.properties.TYPE;
-        let COMMENT = f.properties.COMMENT === null ? 'N/A' : f.properties.COMMENT;
-        l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Prospect</strong></td><td>"+PROSPECT+"</td></tr><tr scope='row'><td><strong>Local Name</strong></td><td>"+LOCAL_NAME+"</td></tr><tr scope='row'><td><strong>Type</strong></td><td>"+TYPE+"</td></tr><tr scope='row'><td><strong>Comment</strong></td><td>"+COMMENT+"</td></tr></tbody><table>");
-
-        }} pointToLayer={(f, latLng) => {
-          return new L.CircleMarker(latLng, {
-            opacity: 1,
-            weight: 2,
-            color: '#D9480F',
-            fillColor: '#D9480F',
-            radius: 3
-          })
-        }} />
-
-        </LayersControl.Overlay>
-        <LayersControl.Overlay name="Artisanal Workings-2">
-        <GeoJSON data={artisanal2} onEachFeature={(f, l) => {
-           let PROSPECT = f.properties.PROSPECT;
-           let LOCAL_NAME = f.properties.LOCAL_NAME;
-           let TYPE = f.properties.TYPE;
-           let COMMENT = f.properties.COMMENT === null ? 'N/A' : f.properties.COMMENT;
-           l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Prospect</strong></td><td>"+PROSPECT+"</td></tr><tr scope='row'><td><strong>Local Name</strong></td><td>"+LOCAL_NAME+"</td></tr><tr scope='row'><td><strong>Type</strong></td><td>"+TYPE+"</td></tr><tr scope='row'><td><strong>Comment</strong></td><td>"+COMMENT+"</td></tr></tbody><table>");
-   
-        }} pointToLayer={(f, latLng) => {
-          return new L.CircleMarker(latLng, {
-            opacity: 1,
-            weight: 2,
-            color: '#D9480F',
-            fillColor: '#D9480F',
-            radius: 3
-          })
-        }} />
-        </LayersControl.Overlay>
       */}
   </LayersControl>
 </MapContainer>

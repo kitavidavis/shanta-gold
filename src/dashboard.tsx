@@ -20,7 +20,8 @@ import {
   Switch,
   Select,
   Stack,
-  Button
+  Button,
+  ScrollArea
 } from '@mantine/core';
 import { MantineProvider, ColorSchemeProvider, ColorScheme, createStyles, Input } from '@mantine/core';
 import { useColorScheme, useViewportSize } from '@mantine/hooks';
@@ -46,6 +47,10 @@ import { Transformers1, Transformers2, Transformers3 } from "./geodata/electrici
 import Streams from "./geodata/Streams";
 import PrimarySubstations from "./geodata/primary-substations";
 import BuildingFootprints from "./geodata/building-footprints";
+import Isulu1 from './geodata/Isulu1';
+import Isulu2 from './geodata/Isulu2';
+import BuildingsIsulu from "./geodata/BuildingsIsulu";
+
 import { AuthContext } from "./App";
 
 const turf = require("@turf/turf");
@@ -207,7 +212,7 @@ export default function Dashboard() {
   const [ready, setReady] = useState(false);
   const [seamless, setSeamless] = useState(false);
   const [center, setCenter] = useState<any>([-0.003, 34.515979]);
-  const [zoom, setZoom] = useState<number>(13)
+  const [zoom, setZoom] = useState<number>(10)
   const [basemap, setBasemap] = useState(false);
   const [boundary, setBoundary] = useState<string>("0");
   const [showbuildings, setShowBuildings] = useState(true);
@@ -216,6 +221,8 @@ export default function Dashboard() {
   const [prints3, setPrints3] = useState<any>(null);
   const [prints4, setPrints4] = useState<any>(null);
   const [prints5, setPrints5] = useState<any>(null);
+  const [prints6, setPrints6] = useState<any>(null);
+  const [prints7, setPrints7] = useState<any>(null);
   const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const { state, dispatch } = useContext(AuthContext);
 
@@ -324,11 +331,49 @@ export default function Dashboard() {
     setPrints5(arr.length)
   }
 
+  const preprocess6 = () => {
+    let arr = [];
+    for(let k=0; k<Isulu1.features.length; k++){
+      let poly = turf.polygon(Isulu1.features[k].geometry.coordinates[0]);
+
+      for(let i=0; i<BuildingsIsulu.features.length; i++){
+        let pt = turf.polygon(BuildingsIsulu.features[i].geometry.coordinates[0]);
+        let centroid = turf.centroid(pt);
+  
+        if(turf.booleanPointInPolygon(centroid, poly)){
+          arr.push(BuildingsIsulu.features[i]);
+        }
+      }
+    }
+
+    setPrints6(arr.length)
+  }
+
+  const preprocess7 = () => {
+    let arr = [];
+    for(let k=0; k<Isulu2.features.length; k++){
+      let poly = turf.polygon(Isulu2.features[k].geometry.coordinates[0]);
+
+      for(let i=0; i<BuildingsIsulu.features.length; i++){
+        let pt = turf.polygon(BuildingsIsulu.features[i].geometry.coordinates[0]);
+        let centroid = turf.centroid(pt);
+  
+        if(turf.booleanPointInPolygon(centroid, poly)){
+          arr.push(BuildingsIsulu.features[i]);
+        }
+      }
+    }
+
+    setPrints7(arr.length)
+  }
+
     preprocess();
     preprocess2();
     preprocess3();
     preprocess4();
     preprocess5();
+    preprocess6();
+    preprocess7();
   }, []);
 
   const styleDrills = () => {
@@ -430,6 +475,7 @@ export default function Dashboard() {
             {showbuildings ? (
               <>
               <Text mb={15}>Total Buildings:<strong>{BuildingFootprints.features.length}</strong> </Text>
+              <ScrollArea>
             <Paper withBorder radius="md" p="xs">
             <Group>
             <RingProgress
@@ -510,7 +556,7 @@ export default function Dashboard() {
             size={80}
             roundCaps
             thickness={8}
-            sections={[{ value: (prints3 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            sections={[{ value: ((prints4 + prints5) / BuildingFootprints.features.length) * 100, color: "cyan" }]}
             label={
               <Center>
                 <ArrowUpRight />
@@ -528,6 +574,57 @@ export default function Dashboard() {
               </div>
             </Group>
           </Paper>
+
+          <Paper mt="md" withBorder radius="md" p="xs">
+            <Group>
+            <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[{ value: (prints6 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            label={
+              <Center>
+                <ArrowUpRight />
+              </Center>
+            }
+          />
+    
+              <div>
+                <Text color="dimmed">
+                  Isulu Option 1
+                </Text>
+                <Text weight={700} size="xl" >
+                {prints6}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+
+          <Paper mt="md" withBorder radius="md" p="xs">
+            <Group>
+            <RingProgress
+            size={80}
+            roundCaps
+            thickness={8}
+            sections={[{ value: (prints7 / BuildingFootprints.features.length) * 100, color: "cyan" }]}
+            label={
+              <Center>
+                <ArrowUpRight />
+              </Center>
+            }
+          />
+    
+              <div>
+                <Text color="dimmed">
+                  Isulu Option 2
+                </Text>
+                <Text weight={700} size="xl" >
+                {prints7}
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+          </ScrollArea>
           </>
             ) : null}
           {ready && !showbuildings ? (  
@@ -629,18 +726,6 @@ export default function Dashboard() {
     </LayersControl.BaseLayer>
         </>
       ) : null}
-    <LayersControl.Overlay checked name="Building Footprints" >
-    <GeoJSON data={BuildingFootprints}  pointToLayer={(f, latLng) => {
-      return new L.CircleMarker(latLng, {
-        opacity: 1,
-        weight: 2,
-        color: '#E9ECEF',
-        fillColor: '#E9ECEF',
-        fillOpacity: 1,
-        radius: 15
-      })
-    }} />
-  </LayersControl.Overlay>
 
     <LayersControl.Overlay checked name="Ramula Option 1">
     <LayerGroup>
@@ -910,7 +995,7 @@ export default function Dashboard() {
       })}
     </LayerGroup>
   </LayersControl.Overlay>
-  <LayersControl.Overlay checked name="Electricity Distribution Transformers" >
+  <LayersControl.Overlay name="Electricity Distribution Transformers" >
     <LayerGroup>
       <GeoJSON data={Transformers1} onEachFeature={(f, l) => {
             l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>RCC1</strong></td><td>"+f.properties.RCC1+"</td></tr><tr scope='row'><td><strong>County2</strong></td><td>"+f.properties.County2+"</td></tr><tr scope='row'><td><strong>Branch3</strong></td><td>"+f.properties.Branch3+"</td></tr><tr scope='row'><td><strong>Substation9</strong></td><td>"+f.properties.Substati9+"</td></tr><tr scope='row'><td><strong>DCS_Cate15</strong></td><td>"+f.properties.DCS_Cate15+"</td></tr><tr scope='row' ><td><strong>Modifyin25</strong></td><td>"+f.properties.Modifyin25+"</td></tr><tr scope='row' ><td><strong>Origin_o27</strong></td><td>"+f.properties.Origin_o27+"</td></tr><tr scope='row'><td><strong>Feeder_o28</strong></td><td>"+f.properties.Feeder_o28+"</td></tr><tr scope='row'><td><strong>Substation29</strong></td><td>"+f.properties.Substati29+"</td></tr><tr scope='row'><td><strong>HT_Isola32</strong></td><td>"+f.properties.HT_Isola32+"</td></tr><tr scope='row'><td><strong>Road_Str38</strong></td><td>"+f.properties.Road_Str38+"</td></tr><tr scope='row'><td><strong>Physical39</strong></td><td>"+f.properties.Physical39+"</td></tr><tr scope='row'><td><strong>Road</strong></td><td>"+f.properties.Road+"</td></tr></tbody><table>");
@@ -948,7 +1033,29 @@ export default function Dashboard() {
     </LayerGroup>
   </LayersControl.Overlay>
 
-  <LayersControl.Overlay checked name="Power Transmission Lines(33KV)" >
+  <LayersControl.Overlay checked name="Isulu Option 1" >
+    <GeoJSON data={Isulu1} style={(feature) => {
+      return {
+        color: "white",
+        fillColor: "transparent",
+        weight: 2,
+        opacity: 1
+      }
+    }} />
+  </LayersControl.Overlay>
+
+  <LayersControl.Overlay checked name="Isulu Option 2" >
+    <GeoJSON data={Isulu2} style={(feature) => {
+      return {
+        color: "white",
+        fillColor: "transparent",
+        weight: 2,
+        opacity: 1
+      }
+    }} />
+  </LayersControl.Overlay>
+
+  <LayersControl.Overlay name="Power Transmission Lines(33KV)" >
     <GeoJSON data={Powerlines} style={(feature) => {
       return {
         color: "blue",
@@ -960,7 +1067,7 @@ export default function Dashboard() {
   }} />
   </LayersControl.Overlay>
 
-  <LayersControl.Overlay checked name="Power Transmission Lines(11KV)" >
+  <LayersControl.Overlay name="Power Transmission Lines(11KV)" >
     <GeoJSON data={Powerlines11} style={(feature) => {
       return {
         color: "red",

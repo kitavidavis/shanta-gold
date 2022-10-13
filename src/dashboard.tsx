@@ -629,6 +629,19 @@ export default function Dashboard() {
     </LayersControl.BaseLayer>
         </>
       ) : null}
+    <LayersControl.Overlay checked name="Building Footprints" >
+    <GeoJSON data={BuildingFootprints}  pointToLayer={(f, latLng) => {
+      return new L.CircleMarker(latLng, {
+        opacity: 1,
+        weight: 2,
+        color: '#E9ECEF',
+        fillColor: '#E9ECEF',
+        fillOpacity: 1,
+        radius: 15
+      })
+    }} />
+  </LayersControl.Overlay>
+
     <LayersControl.Overlay checked name="Ramula Option 1">
     <LayerGroup>
     {Ramula1.features.filter((item) => {
@@ -985,6 +998,7 @@ export default function Dashboard() {
       l.bindPopup("<table class='table' ><tbody><tr scope='row'><td><strong>Name</strong></td><td>"+f.properties.Location41+"</td></tr></tbody><table>");
   }} />
   </LayersControl.Overlay>
+
 {/*
   <LayersControl.Overlay name='Ethnic Clans'>
         <GeoJSON style={(feature) => {
